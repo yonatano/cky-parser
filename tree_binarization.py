@@ -1,4 +1,5 @@
 import random
+import itertools
 import simplejson
 
 grammar_ = {
@@ -11,10 +12,14 @@ grammar_ = {
 }
 
 grammar_ = {
-    'S': [('N', 'N')],
-    'B': [('derp',)],
-    'N': [('fish',), ('taco',), ('B',)] #N -> fish|taco|B
+    'S': [('A', 'B', 'A', 'C')],
+    'A': [('a', 'A'), ('e',)],
+    'B': [('b', 'B'), ('e',)],
+    'C': [('c',)]
 }
+
+terminals_ = ['a', 'b', 'c', 'e']
+nonterminals_ = ['A', 'B', 'C']
 
 def unit_productions(grammar, nonterminals):
     """Retrieve all rules of the form A->B where A,B are nonterminals"""
@@ -23,6 +28,22 @@ def unit_productions(grammar, nonterminals):
         unit_prods.extend([(k, c[0]) for c in v if (len(c) == 1 and 
                           c[0] in nonterminals and k in nonterminals)])
     return unit_prods
+
+def null_productions_swaps(production, symbol):
+    """Given ('A', 'B', 'A') and 'A', returns: 
+    [('B', 'A'), ('A', 'B'), ('B',)]"""
+    productions = []
+    symbol_indeces = [i for i,k in enumerate(production) if k == symbol]
+    permutations = []
+    for i in range(1, len(production) + 1): #aggregate all combinations of indeces to nullify
+        permutations.extend(list(itertools.combinations(symbol_indeces, i)))
+
+    for p in permutations:
+        new_prod = tuple(sym for k,sym in enumerate(production) if k not in p)
+        productions.append(new_prod)
+        
+    productions = [p for p in productions if p]
+    return list(set(productions))
 
 def binarize_grammar(grammar, startsym, terminals, nonterminals):
     """Transforms a grammar to Chomsky normal form"""
@@ -34,7 +55,20 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
     startsym += '0'
 
     """Remove null productions --
-    remove all X where X->e or X->...->e."""
+    For every A->e, change the productions containing A by replacing 
+    each occurence if A with e, then remove A->e."""
+    null_prods = [(k, 'e') for k,v in grammar.iteritems() if ('e',) in v]
+    while null_prods:
+        for np in null_prods:
+            #find each X->K such that K reduces to np[0]
+            for k,v in grammar.iteritems():
+                for i,c in enumerate(v[:]):
+                    if np[0] in c:
+                        if c == (np[0],):
+                            grammar[k][i] = ('e',)
+                        grammar[k].extend(null_productions_swaps(c, np[0]))
+            grammar[np[0]].remove(('e',))
+        null_prods = [(k, 'e') for k,v in grammar.iteritems() if ('e',) in v]
 
     """Remove unit productions -- 
     for every A->B, append A->X for every X in B->X, remove A->B."""
@@ -42,14 +76,22 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
     while unit_prods: #removal of unit productions can generate more
         for up in unit_prods:
             "Append rules of the form A->X for every rule B->X"
-            grammar[up[0]].extend( [x for x in grammar[up[1]]] )
+            grammar[up[0]].extend( [x for x in grammar[up[1]] if x not in 
+                                  grammar[up[0]]] )
             grammar[up[0]].remove( (up[1],) )
         unit_prods = unit_productions(grammar, nonterminals)
 
+    """remove emptied productions and duplicate ORs"""
+    to_del = [k for k in grammar if not grammar[k]]
+    for k in to_del:
+        grammar.pop(k)
+
+    for k,v in grammar.iteritems():
+        grammar[k] = list(set(v))
 
     print grammar
-
-binarize_grammar(grammar_, 'S', ['fish', 'taco', 'derp', 'e'], ['B', 'N'])
+    
+binarize_grammar(grammar_, 'S', terminals_, nonterminals_)
 
 
 
