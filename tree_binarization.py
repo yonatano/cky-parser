@@ -43,7 +43,14 @@ def null_productions_swaps(production, symbol):
         productions.append(new_prod)
         
     productions = [p for p in productions if p]
-    return list(set(productions))
+    return productions
+
+def multivariable_productions(grammar, nonterminals):
+    """Retrieve all rules of the form A->X where X is a number of symbols > 2"""
+    multivar_prods = []
+    for k,v in grammar.iteritems():
+        multivar_prods.extend([(k,c) for c in v if len(c) > 2])
+    return multivar_prods
 
 def binarize_grammar(grammar, startsym, terminals, nonterminals):
     """Transforms a grammar to Chomsky normal form"""
@@ -80,6 +87,17 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
                                   grammar[up[0]]] )
             grammar[up[0]].remove( (up[1],) )
         unit_prods = unit_productions(grammar, nonterminals)
+
+    """Remove multi-variable productions --
+    for every A->B1...Bn, replace with A->B1C C->B2...Bn"""
+    multivar_prods = multivariable_productions(grammar, nonterminals)
+    while multivar_prods:
+        for k,c in multivar_prods:
+            grammar[k].remove(c)
+            prod_name = "%s_%s" % (k, c[0])
+            grammar[k].append((c[0], prod_name))
+            grammar[prod_name] = c[1:]
+        multivar_prods = multivariable_productions(grammar, nonterminals)
 
     """remove emptied productions and duplicate ORs"""
     to_del = [k for k in grammar if not grammar[k]]
