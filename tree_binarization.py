@@ -52,6 +52,14 @@ def multivariable_productions(grammar, nonterminals):
         multivar_prods.extend([(k,c) for c in v if len(c) > 2])
     return multivar_prods
 
+def two_variable_productions(grammar, nonterminals, terminals):
+    """Retrieve all rules of the form A->aB"""
+    twovar_prods = []
+    for k,v in grammar.iteritems():
+        twovar_prods.extend([(k,c) for c in v if (len(c) == 2 and c[0] in 
+                              terminals and c[1] in nonterminals)])
+    return twovar_prods
+
 def binarize_grammar(grammar, startsym, terminals, nonterminals):
     """Transforms a grammar to Chomsky normal form"""
 
@@ -97,7 +105,20 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
             prod_name = "%s_%s" % (k, c[0])
             grammar[k].append((c[0], prod_name))
             grammar[prod_name] = c[1:]
+            nonterminals.append(prod_name)
         multivar_prods = multivariable_productions(grammar, nonterminals)
+
+    """Remove productions of the form A->aB --
+    for every A->aB, replace with A->XB and X->a"""
+    twovar_prods = two_variable_productions(grammar, nonterminals, terminals)
+    while twovar_prods:
+        for k,c in twovar_prods:
+            grammar[k].remove(c)
+            prod_name = "%s_%s" % (k, c[0])
+            grammar[k].append((prod_name, c[1]))
+            grammar[prod_name] = [(c[0])]
+            nonterminals.append(prod_name)
+        twovar_prods = two_variable_productions(grammar, nonterminals, terminals)
 
     """remove emptied productions and duplicate ORs"""
     to_del = [k for k in grammar if not grammar[k]]
@@ -107,9 +128,6 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
     for k,v in grammar.iteritems():
         grammar[k] = list(set(v))
 
-    print grammar
-    
-binarize_grammar(grammar_, 'S', terminals_, nonterminals_)
 
 
 
