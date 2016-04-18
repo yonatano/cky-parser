@@ -1,3 +1,9 @@
+# -*- coding: utf-8 -*-
+
+"""
+tree_binarization: a set of functions used to binarize a CFG (Chomsky normal form)
+"""
+
 import string
 import random
 import itertools
