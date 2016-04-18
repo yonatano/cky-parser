@@ -2,11 +2,6 @@ import string
 import random
 import itertools
 
-def print_cfg(cfg):
-        for k,v in cfg.iteritems():
-            v_ = [''.join(c) for c in v]
-            print "{}->{}".format(k, "|".join(v_))
-
 def get_or_create_rule(grammar, nonterminals, target):
     """Returns the name of the rule X->target, or creates the rule if it is not
     already in the grammar."""
