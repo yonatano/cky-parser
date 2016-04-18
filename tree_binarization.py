@@ -1,25 +1,30 @@
+import string
 import random
 import itertools
-import simplejson
 
-grammar_ = {
-    'S':  [('NP', 'VP')],
-    'VP': [('V', 'NP'), ('V', 'NP', 'PP')],
-    'NP': [('NP', 'NP'), ('NP', 'PP'), ('N'), ('e')], #NP -> NP NP|NP PP|N|e
-    'PP': [('P', 'NP')],
-    'N':  [('people'), ('fish'), ('tanks'), ('rods')],
-    'V':  [('people'), ('fish'), ('tanks'), ('with')]
-}
+def print_cfg(cfg):
+        for k,v in cfg.iteritems():
+            v_ = [''.join(c) for c in v]
+            print "{}->{}".format(k, "|".join(v_))
 
-grammar_ = {
-    'S': [('A', 'B', 'A', 'C')],
-    'A': [('a', 'A'), ('e',)],
-    'B': [('b', 'B'), ('e',)],
-    'C': [('c',)]
-}
-
-terminals_ = ['a', 'b', 'c', 'e']
-nonterminals_ = ['A', 'B', 'C']
+def get_or_create_rule(grammar, nonterminals, target):
+    """Returns the name of the rule X->target, or creates the rule if it is not
+    already in the grammar."""
+    exists = [n for n in nonterminals if target == grammar[n]]
+    if exists:
+        return exists[0]
+    
+    while True:
+        alphabet = string.ascii_uppercase
+        try:
+            new_name = random.choice(list(set(alphabet) - set(nonterminals)))
+            nonterminals.append(new_name)
+            grammar[new_name] = target
+            return new_name
+        except IndexError:
+            alphabet = [''.join(z) for z in zip(alphabet, string.ascii_uppercase)]
+            continue
+        break
 
 def unit_productions(grammar, nonterminals):
     """Retrieve all rules of the form A->B where A,B are nonterminals"""
@@ -65,13 +70,12 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
 
     """Add a new start symbol -- 
     start symbol cannot occur on right-hand side of a rule."""
-    grammar[startsym + '0'] = [(startsym)]
-    nonterminals.append(startsym)
-    startsym += '0'
+    grammar[startsym + '0'] = [(startsym,)]
+    nonterminals.append(startsym + '0')
 
     """Remove null productions --
     For every A->e, change the productions containing A by replacing 
-    each occurence if A with e, then remove A->e."""
+    each occurence of A with e, then remove A->e."""
     null_prods = [(k, 'e') for k,v in grammar.iteritems() if ('e',) in v]
     while null_prods:
         for np in null_prods:
@@ -80,8 +84,9 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
                 for i,c in enumerate(v[:]):
                     if np[0] in c:
                         if c == (np[0],):
-                            grammar[k][i] = ('e',)
-                        grammar[k].extend(null_productions_swaps(c, np[0]))
+                            grammar[k].append(('e',))
+                        else:
+                            grammar[k].extend(null_productions_swaps(c, np[0]))  
             grammar[np[0]].remove(('e',))
         null_prods = [(k, 'e') for k,v in grammar.iteritems() if ('e',) in v]
 
@@ -102,10 +107,8 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
     while multivar_prods:
         for k,c in multivar_prods:
             grammar[k].remove(c)
-            prod_name = "%s_%s" % (k, c[0])
+            prod_name = get_or_create_rule(grammar, nonterminals, [c[1:]])
             grammar[k].append((c[0], prod_name))
-            grammar[prod_name] = c[1:]
-            nonterminals.append(prod_name)
         multivar_prods = multivariable_productions(grammar, nonterminals)
 
     """Remove productions of the form A->aB --
@@ -114,10 +117,8 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
     while twovar_prods:
         for k,c in twovar_prods:
             grammar[k].remove(c)
-            prod_name = "%s_%s" % (k, c[0])
+            prod_name = get_or_create_rule(grammar, nonterminals, [(c[0],)])
             grammar[k].append((prod_name, c[1]))
-            grammar[prod_name] = [(c[0])]
-            nonterminals.append(prod_name)
         twovar_prods = two_variable_productions(grammar, nonterminals, terminals)
 
     """remove emptied productions and duplicate ORs"""
@@ -127,7 +128,3 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
 
     for k,v in grammar.iteritems():
         grammar[k] = list(set(v))
-
-
-
-
