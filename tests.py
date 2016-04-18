@@ -9,6 +9,7 @@ def stringify_cfg(cfg):
     return stringified
 
 if __name__ == "__main__":
+    """Test binarization"""
     grammar_ = {
         'S': [('A', 'S', 'A'), ('a', 'B')],
         'A': [('B',), ('S',)],
@@ -17,8 +18,9 @@ if __name__ == "__main__":
     terminals_ = ['a', 'b', 'e']
     nonterminals_ = ['S', 'A', 'B']
 
-    grammar_chomsky_nf = copy.deepcopy(grammar_)
-    binarize_grammar(grammar_chomsky_nf, 'S', terminals_, nonterminals_)
-
+    grammar_chomsky_nf = binarize_grammar(grammar_, 'S', terminals_, nonterminals_)
+    
     print "Pre-binarization:\n%s" % stringify_cfg(grammar_)
     print "Post-binarization:\n%s" % stringify_cfg(grammar_chomsky_nf)
+
+

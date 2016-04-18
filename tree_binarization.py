@@ -4,9 +4,10 @@
 tree_binarization: a set of functions used to binarize a CFG (Chomsky normal form)
 """
 
-import string
-import random
+import copy
 import itertools
+import random
+import string
 
 def get_or_create_rule(grammar, nonterminals, target):
     """Returns the name of the rule X->target, or creates the rule if it is not
@@ -68,6 +69,7 @@ def two_variable_productions(grammar, nonterminals, terminals):
 
 def binarize_grammar(grammar, startsym, terminals, nonterminals):
     """Transforms a grammar to Chomsky normal form"""
+    grammar = copy.deepcopy(grammar)
 
     """Add a new start symbol -- 
     start symbol cannot occur on right-hand side of a rule."""
@@ -129,3 +131,5 @@ def binarize_grammar(grammar, startsym, terminals, nonterminals):
 
     for k,v in grammar.iteritems():
         grammar[k] = list(set(v))
+
+    return grammar
