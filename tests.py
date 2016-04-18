@@ -22,5 +22,3 @@ if __name__ == "__main__":
     
     print "Pre-binarization:\n%s" % stringify_cfg(grammar_)
     print "Post-binarization:\n%s" % stringify_cfg(grammar_chomsky_nf)
-
-
