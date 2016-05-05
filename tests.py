@@ -1,5 +1,15 @@
 import copy
+from cky_parser import CkyParser
 from tree_binarization import binarize_grammar
+
+def print_tree(tree, depth):
+        if tree is None:
+            return
+        print_tree(tree['right'], depth + 1)
+        print "\t    " * depth + "/"
+        print "\t" * depth + tree['symbol']
+        print "\t    " * depth + "\\"
+        print_tree(tree['left'], depth + 1)
 
 def stringify_cfg(cfg):
     stringified = ""
@@ -22,3 +32,20 @@ if __name__ == "__main__":
     
     print "Pre-binarization:\n%s" % stringify_cfg(grammar_)
     print "Post-binarization:\n%s" % stringify_cfg(grammar_chomsky_nf)
+
+    """Test Parser"""
+    grammar = {
+        'S': [('NP', 'VP')],
+        'VP': [('V', 'NP'), ('VP', 'PP')],
+        'V': [('eat',)],
+        'NP': [('NP', 'PP'), ('we',), ('sushi',), ('tuna',)],
+        'PP': [('P', 'NP')],
+        'P': [('with',)],
+    }
+    terminals = ['eat', 'we', 'sushi', 'tuna', 'with']
+    nonterminals = grammar.keys()
+    cky = CkyParser(grammar, terminals, nonterminals)
+    parse_trees = cky.parse("eat sushi with tuna".split())
+    for tree in parse_trees:
+        print_tree(tree, 1)
+        print "\n\n"
