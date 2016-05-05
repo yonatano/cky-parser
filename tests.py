@@ -6,9 +6,9 @@ def print_tree(tree, depth):
         if tree is None:
             return
         print_tree(tree['right'], depth + 1)
-        print "\t    " * depth + "/"
+        print "\t    " * depth + "/" if tree['right'] is not None else ""
         print "\t" * depth + tree['symbol']
-        print "\t    " * depth + "\\"
+        print "\t    " * depth + "\\" if tree['left'] is not None else ""
         print_tree(tree['left'], depth + 1)
 
 def stringify_cfg(cfg):
@@ -45,7 +45,8 @@ if __name__ == "__main__":
     terminals = ['eat', 'we', 'sushi', 'tuna', 'with']
     nonterminals = grammar.keys()
     cky = CkyParser(grammar, terminals, nonterminals)
-    parse_trees = cky.parse("eat sushi with tuna".split())
+    parse_trees = cky.parse("we eat sushi with tuna".split())
     for tree in parse_trees:
+        print "tree:"
         print_tree(tree, 1)
         print "\n\n"
