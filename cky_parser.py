@@ -33,12 +33,12 @@ class CkyParser():
 
         #fill out the table
         def fill_chart(chartsz):
-            for span in range(1, chartsz - 1 + 1):
+            for span in range(1, chartsz):
                 for i in range(1, chartsz - span + 1):
                     fill_cell(i, i + span)
 
         def fill_cell(i, j):
-            for k in range(i, j - 1 + 1):
+            for k in range(i, j):
                 combine_cells(i, k, j)
 
         def combine_cells(i, k, j):
